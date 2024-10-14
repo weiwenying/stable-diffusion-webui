@@ -278,6 +278,40 @@ def purge_networks_from_memory():
     devices.torch_gc()
 
 
+def check_path_or_name(names):
+    filepaths = []
+    filenames = []
+    filenames_ = []
+    for n in names:
+        x = os.path.splitext(os.path.basename(n))[0]
+        if x == n:
+            filenames.append(x)
+        else:
+            filenames_.append(x)
+            filepaths.append(n)
+    return (filenames_, filepaths), filenames
+
+
+def load_lora_from_path(filenames_, filepaths):
+    """weiwenying520@gmail.com
+    """
+    networks_on_disk = []
+    failed_to_load_networks = []
+    for name, path in zip(filenames_, filepaths):
+        try:
+            # name = 'datasetw-000001'
+            # filename = '/home/william/projects/public/stable-diffusion-webui/models/Lora/datasetw-000001.safetensors'
+            if not os.path.exists(path):
+                failed_to_load_networks.append(path)
+                raise OSError(f"Failed to load network {name} from {path}")
+            entry = network.NetworkOnDisk(name, path)
+            networks_on_disk.append(entry)
+        except OSError:  # should catch FileNotFoundError and PermissionError etc.
+            errors.report(f"Failed to load network {name} from {path}", exc_info=True)
+            continue
+    return networks_on_disk, failed_to_load_networks
+
+
 def load_networks(names, te_multipliers=None, unet_multipliers=None, dyn_dims=None):
     emb_db = sd_hijack.model_hijack.embedding_db
     already_loaded = {}
@@ -290,6 +324,9 @@ def load_networks(names, te_multipliers=None, unet_multipliers=None, dyn_dims=No
                 emb_db.register_embedding_by_name(None, shared.sd_model, emb_name)
 
     loaded_networks.clear()
+
+    (filenames_, filepaths), names = check_path_or_name(names)
+    networks_on_disk_, failed_to_load_networks = load_lora_from_path(filenames_, filepaths)
 
     unavailable_networks = []
     for name in names:
@@ -307,7 +344,10 @@ def load_networks(names, te_multipliers=None, unet_multipliers=None, dyn_dims=No
 
         networks_on_disk = [available_networks.get(name, None) if name.lower() in forbidden_network_aliases else available_network_aliases.get(name, None) for name in names]
 
-    failed_to_load_networks = []
+    networks_on_disk.extend(networks_on_disk_)  # weiwenying520@gmail.com
+    names.extend(filenames_)
+    
+    # failed_to_load_networks = []
 
     for i, (network_on_disk, name) in enumerate(zip(networks_on_disk, names)):
         net = already_loaded.get(name, None)
