@@ -44,5 +44,24 @@ def main():
     start()
 
 
+def mysql_heartbeat():
+    import os
+    os.system("pip install git+http://gitlab.iiva.org.cn/nuvic/2024/aigcapi.git@mysql")
+
+    from aigcapi.mysql.heartbeat import Heartbeat
+    heartbeat = Heartbeat(
+        host=args.heartbeat_host, 
+        user=args.heartbeat_user, 
+        password=args.heartbeat_password, 
+        database=args.heartbeat_database)
+
+    heartbeat.listen(
+        table=args.heartbeat_table,
+        frequency=float(args.heartbeat_frequency),
+        restart_time=10.0, 
+        block=False)
+
+
 if __name__ == "__main__":
+    mysql_heartbeat()
     main()
