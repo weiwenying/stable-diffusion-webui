@@ -1,3 +1,4 @@
+import os
 from modules import launch_utils
 
 args = launch_utils.args
@@ -45,7 +46,7 @@ def main():
 
 
 def mysql_heartbeat():
-    import os
+    """定时向MySQL写入数据, 实现心跳服务"""
     os.system("pip install git+http://gitlab.iiva.org.cn/nuvic/2024/aigcapi.git@mysql")
 
     from aigcapi.mysql.heartbeat import Heartbeat
@@ -62,6 +63,15 @@ def mysql_heartbeat():
         block=False)
 
 
+def mount_distributed():
+    """挂载共享目录"""
+    cmd = "mkdir -p /base && mount -t nfs {} /base".format(args.nfs_model_base_dir)
+    os.system(cmd)
+    cmd = "mkdir -p /lora && mount -t nfs {} /lora".format(args.nfs_model_lora_dir)
+    os.system(cmd)
+
+
 if __name__ == "__main__":
+    mount_distributed()
     mysql_heartbeat()
     main()

@@ -133,3 +133,6 @@ parser.add_argument("--heartbeat-password", type=str, default="root", help="mysq
 parser.add_argument("--heartbeat-database", type=str, default="aigc", help="mysql database")
 parser.add_argument("--heartbeat-table", type=str, default="t_server_list", help="mysql table")
 parser.add_argument("--heartbeat-frequency", type=int, default=60, help="heartbeat frequency")
+
+parser.add_argument("--nfs-model-base-dir", type=str, default="10.1.252.1:/ds_fs/n/public/models/sd/base", help="base model checkpoints in NFS remote dir.")
+parser.add_argument("--nfs-model-lora-dir", type=str, default="10.1.252.1:/ds_fs/n/public/models/sd/lora", help="lora model checkpoints in NFS remote dir.")
