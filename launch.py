@@ -65,9 +65,9 @@ def mysql_heartbeat():
 
 def mount_distributed():
     """挂载共享目录"""
-    cmd = "mkdir -p /base && mount -t nfs {} /base".format(args.nfs_model_base_dir)
+    cmd = "sudo mkdir -p /base && sudo mount -t nfs {} /base".format(args.nfs_model_base_dir)
     os.system(cmd)
-    cmd = "mkdir -p /lora && mount -t nfs {} /lora".format(args.nfs_model_lora_dir)
+    cmd = "sudo mkdir -p /lora && sudo mount -t nfs {} /lora".format(args.nfs_model_lora_dir)
     os.system(cmd)
 
 
