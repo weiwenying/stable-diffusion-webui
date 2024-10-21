@@ -6,7 +6,7 @@
 
 ```bash
 git clone git@github.com:weiwenying/stable-diffusion-webui.git
-cd stable-diffusion-webui-forge/
+cd stable-diffusion-webui/
 git checkout v1.10.1 -b nuvic
 
 conda create -n noflux python=3.10
@@ -23,6 +23,7 @@ conda install xformers -c xformers
 
 # 然后 `requirements_versions.txt` 打开文件，删除里面的 `torch`
 pip install -r requirements_versions.txt
+pip install mysql-connector-python
 
 python launch.py --skip-version-check --skip-prepare-environment --skip-install --xformers --listen --api --port 12345
 ```
@@ -183,5 +184,100 @@ def load_networks(names, te_multipliers=None, unet_multipliers=None, dyn_dims=No
 
 # 文字描述 <lora:/绝对路径/Lora模型名称:1>    # 优化后的带路径写法
 一只黄毛猫咪 <lora:/root/workspace/stable-diffusion-webui/models/Lora/datasetw-000001:1>
+```
+
+### 添加MySQL心跳
+
+
+在 `modules/cmd_args.py` 文件中，添加参数:
+
+```python
+parser.add_argument("--heartbeat-host", type=str, default="10.1.2.6", help="mysql host")
+parser.add_argument("--heartbeat-user", type=str, default="root", help="mysql user")
+parser.add_argument("--heartbeat-password", type=str, default="root", help="mysql password")
+parser.add_argument("--heartbeat-database", type=str, default="aigc", help="mysql database")
+parser.add_argument("--heartbeat-table", type=str, default="t_server_list", help="mysql table")
+parser.add_argument("--heartbeat-frequency", type=int, default=60, help="heartbeat frequency")
+```
+
+并在 `launch.py` 文件中，添加如下代码：
+
+```python
+def mysql_heartbeat():
+    import os
+    os.system("pip install git+http://gitlab.iiva.org.cn/nuvic/2024/aigcapi.git@mysql")
+
+    from aigcapi.mysql.heartbeat import Heartbeat
+    heartbeat = Heartbeat(
+        host=args.heartbeat_host, 
+        user=args.heartbeat_user, 
+        password=args.heartbeat_password, 
+        database=args.heartbeat_database)
+
+    heartbeat.listen(
+        table=args.heartbeat_table,
+        frequency=float(args.heartbeat_frequency),
+        restart_time=10.0, 
+        block=False)
+
+
+if __name__ == "__main__":
+    mysql_heartbeat()
+    main()
+```
+
+然后使用stable diffusion webui中启动命令，启动即可：
+
+```bash
+pip install mysql-connector-python
+
+python launch.py --skip-version-check  --skip-install --skip-load-model-at-start --no-hashing --no-download-sd-model --xformers --listen --port 12345 --api --heartbeat-host 192.168.30.165 --heartbeat-frequency 1
+```
+
+### 挂载共享文件夹
+
+Lora和SD的模型文件所在目录，后续我们在启动命令中指定：
+
+```bash
+--ckpt-dir "/base" --lora-dir "/lora"
+```
+
+同时，`/base` 和 `/lora` 两个目录，是挂载到分布式存储上的：
+
+```bash
+# 前缀10.1.252.1:/ds_fs/n/你的共享文件夹 /本机目录
+mkdir -p /base && mount -t nfs 10.1.252.1:/ds_fs/n/public/models/sd/base /base
+mkdir -p /lora && mount -t nfs 10.1.252.1:/ds_fs/n/public/models/sd/lora /lora
+```
+
+后期共享目录切换，在 `modules/cmd_args.py` 文件中，添加参数:
+
+```python
+parser.add_argument("--nfs-model-base-dir", type=str, default="10.1.252.1:/ds_fs/n/public/models/sd/base", help="base model checkpoints in NFS remote dir.")
+
+parser.add_argument("--nfs-model-lora-dir", type=str, default="10.1.252.1:/ds_fs/n/public/models/sd/lora", help="lora model checkpoints in NFS remote dir.")
+```
+
+并在 `launch.py` 文件中，添加如下代码：
+
+```python
+def mount_distributed():
+    """挂载共享目录"""
+    cmd = "sudo mkdir -p /base && sudo mount -t nfs {} /base".format(args.nfs_model_base_dir)
+    os.system(cmd)
+    cmd = "sudo mkdir -p /lora && sudo mount -t nfs {} /lora".format(args.nfs_model_lora_dir)
+    os.system(cmd)
+
+
+if __name__ == "__main__":
+    mount_distributed()
+    mysql_heartbeat()
+    main()
+```
+
+然后启动：
+
+```python
+python launch.py --skip-version-check  --skip-install --skip-load-model-at-start --no-hashing --no-download-sd-model --ckpt-dir "/base" --lora-dir "/lora"  --xformers --listen --port 12345 --api --heartbeat-host 10.1.1.28 --heartbeat-frequency 1
 ```
 

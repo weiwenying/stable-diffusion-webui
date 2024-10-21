@@ -47,7 +47,7 @@ def main():
 
 def mysql_heartbeat():
     """定时向MySQL写入数据, 实现心跳服务"""
-    os.system("pip install git+http://gitlab.iiva.org.cn/nuvic/2024/aigcapi.git@mysql")
+    # os.system("pip install git+http://gitlab.iiva.org.cn/nuvic/2024/aigcapi.git@mysql")
 
     from aigcapi.mysql.heartbeat import Heartbeat
     heartbeat = Heartbeat(
@@ -72,6 +72,6 @@ def mount_distributed():
 
 
 if __name__ == "__main__":
-    mount_distributed()
+    # mount_distributed()
     mysql_heartbeat()
     main()
