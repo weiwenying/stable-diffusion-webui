@@ -6,4 +6,4 @@ git pull origin nuvic
 
 git fetch --tags
 
-git checkout -b runtime tags/${1:-"whale-sdwebui-v0.0.3"}
+git checkout -b runtime ${1:-"nuvic"}
