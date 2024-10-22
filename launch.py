@@ -50,6 +50,8 @@ def mysql_heartbeat():
     # os.system("pip install git+http://gitlab.iiva.org.cn/nuvic/2024/aigcapi.git@mysql")
 
     from aigcapi.mysql.heartbeat import Heartbeat
+    from aigcapi.utils.machine import get_local_ip
+
     heartbeat = Heartbeat(
         host=args.heartbeat_host, 
         user=args.heartbeat_user, 
@@ -61,6 +63,8 @@ def mysql_heartbeat():
         frequency=float(args.heartbeat_frequency),
         restart_time=10.0, 
         block=False)
+
+    print("This pod ip address: {}".format(get_local_ip()))
 
 
 def mount_distributed():
