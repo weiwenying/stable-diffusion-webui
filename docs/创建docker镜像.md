@@ -31,8 +31,14 @@ docker run --privileged --shm-size 16G --network host --gpus all -it --name ${CO
 # 有多个GPU时，可以指定某个GPU:
 # git pull origin nuvic && CUDA_VISIBLE_DEVICES=7 python launch.py --skip-version-check --skip-install --skip-load-model-at-start --no-download-sd-model --xformers --listen --port 12345 --api --ckpt-dir "/userhome/base" --lora-dir "/userhome/lora"  --heartbeat-host 10.1.1.28 --heartbeat-frequency 60
 
+# whale-sdwebui:v0.0.5-cuda12.1-ubuntu20.04的启动命令：
+cd /root/workspace/stable-diffusion-webui && bash ./whale_env.sh nuvic && python launch.py --skip-version-check --skip-install --skip-load-model-at-start --no-download-sd-model --xformers --listen --port 12345 --api --ckpt-dir "/userhome/base" --lora-dir "/userhome/lora"  --heartbeat-host 10.1.1.28 --heartbeat-frequency 60 --share
+
+# whale-sdwebui:v0.0.3-cuda12.1-ubuntu20.04的启动命令：
+cd /root/workspace/stable-diffusion-webui && bash ./whale_env.sh whale-sdwebui-v0.0.3 && python launch.py --skip-version-check --skip-install --skip-load-model-at-start --no-download-sd-model --xformers --listen --port 12345 --api --ckpt-dir "/userhome/base" --lora-dir "/userhome/lora"  --heartbeat-host 10.1.1.28 --heartbeat-frequency 60
+
 # whale-sdwebui:v0.0.2-cuda12.1-ubuntu20.04的启动命令：
-bash ./whale_env.sh && python launch.py --skip-version-check --skip-install --skip-load-model-at-start --no-download-sd-model --xformers --listen --port 12345 --api --ckpt-dir "/userhome/base" --lora-dir "/userhome/lora"  --heartbeat-host 10.1.1.28 --heartbeat-frequency 60
+cd /root/workspace/stable-diffusion-webui && bash ./whale_env.sh && python launch.py --skip-version-check --skip-install --skip-load-model-at-start --no-download-sd-model --xformers --listen --port 12345 --api --ckpt-dir "/userhome/base" --lora-dir "/userhome/lora"  --heartbeat-host 10.1.1.28 --heartbeat-frequency 60
 
 # whale-sdwebui:v0.0.1-cuda12.1-ubuntu20.04的启动命令：
 git pull origin nuvic && python launch.py --skip-version-check --skip-install --skip-load-model-at-start --no-download-sd-model --xformers --listen --port 12345 --api --ckpt-dir "/userhome/base" --lora-dir "/userhome/lora"  --heartbeat-host 10.1.1.28 --heartbeat-frequency 60
@@ -246,6 +252,10 @@ git pull origin nuvic && python launch.py --skip-version-check  --skip-install -
 在物理机上，执行下面命令，启动容器：
 
 ```bash
+# 前缀10.1.252.1:/ds_fs/n/你的共享文件夹 /本机目录
+sudo mkdir -p /base && sudo mount -t nfs 10.1.252.1:/ds_fs/n/public/models/sd/lora /base
+sudo mkdir -p /lora && sudo mount -t nfs 10.1.252.1:/ds_fs/n/public/models/sd/lora /lora
+
 container_name="$USER"-whalesdwebui  # 自定义容器名称
 base_image=nuvic/whale-sdwebui:v0.0.1-cuda12.1-ubuntu20.04
 commit_image=nuvic/whale-sdwebui:v0.0.2-cuda12.1-ubuntu20.04
@@ -254,7 +264,7 @@ commit_image=nuvic/whale-sdwebui:v0.0.2-cuda12.1-ubuntu20.04
 # 如果需要在容器内mount, 抛出mount.nfs: Operation not permitted时, 要docker启动参数要加上--privileged
 # docker run --gpus 指定物理GPU  -it --name 自定义容器名称 镜像名称:版本(相应版本要求物理机nvidia driver支持) bash
 # --gpus '"device=0,1"'
-docker run --privileged --network host --gpus all -it --name ${container_name} ${base_image} bash
+docker run --privileged --network host --gpus all -v /base:/base -v /lora:/lora -it --name ${container_name} ${base_image} bash
 ```
 
 然后在容器内置执行下面命令，设置为 [清华pip源](https://mirrors.tuna.tsinghua.edu.cn/help/pypi/) ：
@@ -290,6 +300,16 @@ pip cache purge && conda clean -y --all
 exit
 ```
 
+在物理机，执行下面命令，测试一下：
+
+```bash
+docker start ${container_name}
+
+docker exec ${container_name} bash -c "bash ./whale_env.sh && python launch.py --skip-version-check --skip-install --skip-load-model-at-start --no-download-sd-model --xformers --listen --port 12345 --api --ckpt-dir '/base' --lora-dir '/lora'  --heartbeat-host 10.1.1.28 --heartbeat-frequency 60"
+
+docker stop  ${container_name}
+```
+
 将容器提交为镜像，上传镜像到远程仓库：
 
 ```bash
@@ -310,7 +330,43 @@ docker tag ${commit_image} ${bohua_push}
 docker push ${bohua_push}
 ```
 
+### whale-sdwebui:v0.0.3-cuda12.1-ubuntu20.04
 
+更新了stable diffusion webui的 `whale_env.sh` 脚本。
+
+### whale-sdwebui:v0.0.4-cuda12.1-ubuntu20.04
+
+```bash
+container_name="$USER"-whalesdwebui  # 自定义容器名称
+base_image=nuvic/whale-sdwebui:v0.0.3-cuda12.1-ubuntu20.04
+commit_image=nuvic/whale-sdwebui:v0.0.4-cuda12.1-ubuntu20.04
+
+docker run --privileged --network host --gpus all -v /base:/base -v /lora:/lora -it --name ${container_name} ${base_image} bash
+
+# 要启动科学上网代理工具，下载一个文件，在容器内执行
+wget https://cdn-media.huggingface.co/frpc-gradio-0.2/frpc_linux_amd64 && \
+mv frpc_linux_amd64 frpc_linux_amd64_v0.2 && \
+chmod +x frpc_linux_amd64_v0.2 && \
+mv frpc_linux_amd64_v0.2 /root/miniconda3/lib/python3.10/site-packages/gradio/
+
+python launch.py --skip-version-check --skip-install --skip-load-model-at-start --no-download-sd-model --xformers --listen --share --port 12345 --api --ckpt-dir "/base" --lora-dir "/lora"  --heartbeat-host 10.1.1.28 --heartbeat-frequency 60
+# 退出
+exit
+
+# 物理机执行提交镜像
+# docker commit 容器名称 镜像名称
+docker commit ${container_name} ${commit_image}
+# 上传到官方hub.docker.com: docker login
+docker push ${commit_image}
+# 上传到博华，先登录博华的harbor 10.1.2.1:1443: docker login harbor.bhuhd.com:1443
+bohua_push=harbor.bhuhd.com:1443/aigc/whale-sdwebui:v0.0.4-cuda12.1-ubuntu20.04
+docker tag ${commit_image} ${bohua_push}
+docker push ${bohua_push}
+```
+
+### whale-sdwebui:v0.0.5-cuda12.1-ubuntu20.04
+
+更新了stable diffusion webui的 `whale_env.sh` 脚本。
 
 
 
