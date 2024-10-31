@@ -31,6 +31,9 @@ docker run --privileged --shm-size 16G --network host --gpus all -it --name ${CO
 # 有多个GPU时，可以指定某个GPU:
 # git pull origin nuvic && CUDA_VISIBLE_DEVICES=7 python launch.py --skip-version-check --skip-install --skip-load-model-at-start --no-download-sd-model --xformers --listen --port 12345 --api --ckpt-dir "/userhome/base" --lora-dir "/userhome/lora"  --heartbeat-host 10.1.1.28 --heartbeat-frequency 60
 
+# whale-sdwebui:v0.0.7-cuda12.1-ubuntu20.04的启动命令：
+cd /root/workspace/stable-diffusion-webui && ./whale_env_update.sh && ./whale_env.sh && python launch.py --skip-version-check --skip-install --skip-load-model-at-start --no-download-sd-model --xformers --listen --port 12345 --api --share --ckpt-dir "/userhome/base" --lora-dir "/userhome/lora"  --heartbeat-host 10.1.2.6 --heartbeat-frequency 60 --heartbeat-user root --heartbeat-password 12345@iivA --disable-console-progressbars
+
 # whale-sdwebui:v0.0.5-cuda12.1-ubuntu20.04的启动命令：
 cd /root/workspace/stable-diffusion-webui && bash ./whale_env.sh nuvic && python launch.py --skip-version-check --skip-install --skip-load-model-at-start --no-download-sd-model --xformers --listen --port 12345 --api --ckpt-dir "/userhome/base" --lora-dir "/userhome/lora"  --heartbeat-host 10.1.1.28 --heartbeat-frequency 60 --share
 
@@ -44,25 +47,33 @@ cd /root/workspace/stable-diffusion-webui && bash ./whale_env.sh && python launc
 git pull origin nuvic && python launch.py --skip-version-check --skip-install --skip-load-model-at-start --no-download-sd-model --xformers --listen --port 12345 --api --ckpt-dir "/userhome/base" --lora-dir "/userhome/lora"  --heartbeat-host 10.1.1.28 --heartbeat-frequency 60
 ```
 
+天数智芯GPU:
+
+```bash
+# whale-sdwebui:v0.0.8-corex3.2.0-ubuntu20.04的启动命令：
+cd /root/workspace/stable-diffusion-webui && ./whale_env_update.sh && ./whale_env.sh && python launch.py --skip-version-check --skip-install --skip-load-model-at-start --no-download-sd-model --listen --port 12345 --api --ckpt-dir "/userhome/base" --lora-dir "/userhome/lora"  --heartbeat-host 10.1.2.6 --heartbeat-frequency 60 --heartbeat-user root --heartbeat-password 12345@iivA --disable-console-progressbars --share
+```
+
 启动命令说明：
 
-| 命令/参数                    | 说明                                                    |
-| ---------------------------- | ------------------------------------------------------- |
-| `git pull origin nuvic`      | 更新代码                                                |
-| `python launch.py`           | Stable Diffusion WebUI的启动命令                        |
-| `--skip-version-check`       | 跳过torch和xformers版本检测                             |
-| `--skip-install`             | 跳过python packages依赖安装                             |
-| `--skip-load-model-at-start` | 跳过模型启动时自动加载                                  |
-| `--no-hashing`               | 不进行哈希校验，提高加载速度                            |
-| `--no-download-sd-model`     | Stable-Diffusion目录一个模型都没有的时候，不自动下载    |
-| `--xformers`                 | 启动xformers                                            |
-| `--listen`                   | 允许localhost以外的服务连接。                           |
-| `--port 12345`               | 端口                                                    |
-| `--api`                      | 启动API，这样才能用POST和GET                            |
-| `--ckpt-dir "/base"`         | SD底模型文件所在文件夹，蓝鲸算力中心集群中固定为"/base" |
-| `--lora-dir "/lora"`         | LORA模型文件所在文件夹，蓝鲸算力中心集群中固定为"/lora" |
-| `--heartbeat-host 10.1.1.28` | MySQL数据库的IP地址，用于心跳服务                       |
-| `--heartbeat-frequency 60`   | 心跳频率                                                |
+| 命令/参数                        | 说明                                                    |
+| -------------------------------- | ------------------------------------------------------- |
+| `git pull origin nuvic`          | 更新代码                                                |
+| `python launch.py`               | Stable Diffusion WebUI的启动命令                        |
+| `--skip-version-check`           | 跳过torch和xformers版本检测                             |
+| `--skip-install`                 | 跳过python packages依赖安装                             |
+| `--skip-load-model-at-start`     | 跳过模型启动时自动加载                                  |
+| `--no-hashing`                   | 不进行哈希校验，提高加载速度                            |
+| `--no-download-sd-model`         | Stable-Diffusion目录一个模型都没有的时候，不自动下载    |
+| `--xformers`                     | 启动xformers                                            |
+| `--listen`                       | 允许localhost以外的服务连接。                           |
+| `--port 12345`                   | 端口                                                    |
+| `--api`                          | 启动API，这样才能用POST和GET                            |
+| `--ckpt-dir "/base"`             | SD底模型文件所在文件夹，蓝鲸算力中心集群中固定为"/base" |
+| `--lora-dir "/lora"`             | LORA模型文件所在文件夹，蓝鲸算力中心集群中固定为"/lora" |
+| `--heartbeat-host 10.1.1.28`     | MySQL数据库的IP地址，用于心跳服务                       |
+| `--heartbeat-frequency 60`       | 心跳频率                                                |
+| `--disable-console-progressbars` | 不显示进度条                                            |
 
 ## 创建过程说明
 
@@ -368,11 +379,145 @@ docker push ${bohua_push}
 
 更新了stable diffusion webui的 `whale_env.sh` 脚本。
 
+### whale-sdwebui:v0.0.6-cuda12.1-ubuntu20.04
 
+更新了stable diffusion webui的 `whale_env.sh` 脚本。
 
+```bash
+container_name="$USER"-whalesdwebui  # 自定义容器名称
+base_image=nuvic/whale-sdwebui:v0.0.5-cuda12.1-ubuntu20.04
+commit_image=nuvic/whale-sdwebui:v0.0.6-cuda12.1-ubuntu20.04
+# 上传到博华，先登录博华的harbor 10.1.2.1:1443: docker login harbor.bhuhd.com:1443
+bohua_push=harbor.bhuhd.com:1443/aigc/whale-sdwebui:v0.0.6-cuda12.1-ubuntu20.04
 
+docker run --privileged --network host --gpus all -v /base:/base -v /lora:/lora -it --name ${container_name} ${base_image} bash
 
+git remote add iiva http://gitlab.iiva.org.cn/nuvic/2024/stable-diffusion-webui.git
+git remote remove origin
+git remote add origin https://github.com/AUTOMATIC1111/stable-diffusion-webui.git
+git checkout nuvic && git pull iiva nuvic
 
+# 物理机执行提交镜像
+# docker commit 容器名称 镜像名称
+docker commit ${container_name} ${commit_image}
+# 上传到官方hub.docker.com: docker login
+docker push ${commit_image}
+docker tag ${commit_image} ${bohua_push}
+docker push ${bohua_push}
+docker rm ${container_name}
+```
+
+### whale-sdwebui:v0.0.7-cuda12.1-ubuntu20.04
+
+更新了stable diffusion webui的 `whale_env_update.sh` 脚本。
+
+### whale-sdwebui:v0.0.8-cuda12.1-ubuntu20.04
+
+更新了stable diffusion webui的 `whale_env_update.sh` 脚本。
+
+```bash
+git remote remove iiva
+git remote remove origin
+git remote add origin http://gitlab.iiva.org.cn/nuvic/2024/stable-diffusion-webui.git
+git checkout nuvic && git pull origin nuvic
+```
+
+### whale-sdwebui:v0.0.8-corex3.2.0-ubuntu20.04
+
+在天数智芯GPU服务器上，执行下面命令：
+
+```bash
+docker tag nuvic/whale-sdwebui:3.2.0-whale-base nuvic/whale-sdwebui:v0.0.8-corex3.2.0-ubuntu20.04
+```
+
+### ~~whale-sdwebui:base-corex3.2.1-ubuntu20.04~~
+
+在天数智芯GPU服务器上，执行下面命令：
+
+```bash
+# docker login 10.1.2.1:1443
+container_name="$USER"-whalesdwebui  # 自定义容器名称
+base_image=nuvic/corex:3.2.1-whale-base
+commit_image=nuvic/whale-sdwebui:base-corex3.2.1-ubuntu20.04
+bohua_push=harbor.bhuhd.com:1443/aigc/whale-sdwebui:base-corex3.2.1-ubuntu20.04
+
+docker run -it --privileged --cap-add=ALL --pid=host --network host \
+-v /usr/src:/usr/src \
+-v /lib/modules:/lib/modules \
+-v /dev:/dev \
+--name ${container_name} ${base_image} bash
+```
+
+执行下面命令，配置webui环境：
+
+```bash
+echo "10.1.252.5  gitlab.iiva.org.cn"  >> /etc/hosts
+
+pip install git+http://gitlab.iiva.org.cn/nuvic/2024/aigcapi.git@mysql
+
+cd /root/workspace/
+git clone -b nuvic http://gitlab.iiva.org.cn/nuvic/2024/stable-diffusion-webui.git
+cd /root/workspace/stable-diffusion-webui
+git pull origin nuvic
+
+pip install platformdirs tomli streamlit
+# 天数无法使用xformers
+# conda install xformers -c xformers
+pip install -r requirements_versions_corex.txt
+# TypeError: AsyncConnectionPool.__init__() got an unexpected keyword argument 'socket_options'
+pip install httpx==0.25.0
+pip install mysql-connector-python
+pip install git+https://github.com/openai/CLIP.git
+pip install -U huggingface_hub
+# pip install transformers>=4.38.0
+
+# 成功执行会显示 successfully
+jupyter-lab --no-browser --allow-root
+```
+
+python依赖配置好之后，挂载测试模型：
+
+```bash
+# 前缀10.1.252.1:/ds_fs/n/你的共享文件夹 /本机目录
+mkdir -p /base && mount -t nfs 10.1.252.1:/ds_fs/n/public/models/sd/base /base
+mkdir -p /lora && mount -t nfs 10.1.252.1:/ds_fs/n/public/models/sd/lora /lora
+```
+
+启动webui测试：
+
+```bash
+python launch.py --skip-version-check  --skip-install --skip-load-model-at-start --no-download-sd-model --listen --port 12345 --api --ckpt-dir "/base" --lora-dir "/lora"  --heartbeat-host 10.1.1.28 --heartbeat-frequency 1
+```
+
+```bash
+pip install mysql-connector-python
+pip install pytorch_lightning==1.9.4
+pip install gradio==3.41.2
+pip install omegaconf==2.2.3
+```
+
+```bash
+transformers>=4.38.0
+python launch.py --skip-version-check  --skip-install --skip-load-model-at-start --no-download-sd-model --listen --port 12345 --api --heartbeat-host 10.1.1.28 --heartbeat-frequency 1
+```
+
+```bash
+A tensor with all NaNs was produced in VAE.
+Web UI will now convert VAE into bfloat16 and retry.
+To disable this behavior, disable the 'Automatically convert VAE to bfloat16' setting.
+```
+
+```bash
+modules.devices.NansException: A tensor with NaNs was produced in Unet. This could be either because there's not enough precision to represent the picture, or because your video card does not support half type. Try setting the "Upcast cross attention layer to float32" option in Settings > Stable Diffusion or using the --no-half commandline argument to fix this. Use --disable-nan-check commandline argument to disable this check.
+```
+
+```bash
+ python launch.py --skip-version-check  --skip-install --skip-load-model-at-start --no-download-sd-model --listen --port 12345 --api --heartbeat-host 10.1.1.28 --heartbeat-frequency 1 --no-half-vae --no-half --precision full --medvram-sdxl
+```
+
+```bash
+ python launch.py --skip-version-check  --skip-install --skip-load-model-at-start --no-download-sd-model --listen --port 12345 --api --heartbeat-host 10.1.1.28 --heartbeat-frequency 1 --precision half
+```
 
 
 
