@@ -64,7 +64,7 @@ def mysql_heartbeat():
         restart_time=10.0, 
         block=False)
 
-    print("This pod ip address: {}".format(get_local_ip()))
+    print("\n===\nThis node ip address(容器IP地址): {}\n===\n".format(get_local_ip()))
 
 
 def mount_distributed():
